@@ -1,8 +1,8 @@
-require('dotenv').config();
-const express = require('express');
-const request = require('request-promise-native');
-const NodeCache = require('node-cache');
-const session = require('express-session');
+import 'dotenv/config';
+import express from 'express';
+import NodeCache from 'node-cache';
+import session from 'express-session';
+
 const app = express();
 
 const PORT = 3000;
@@ -122,15 +122,25 @@ app.get('/oauth-callback', async (req, res) => {
 
 const exchangeForTokens = async (userId, exchangeProof) => {
   try {
-    const responseBody = await request.post(
-      'https://api.hubapi.com/oauth/v1/token',
-      {
-        form: exchangeProof,
-      }
-    );
+    const response = await fetch('https://api.hubapi.com/oauth/v1/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams(exchangeProof).toString(),
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.json();
+      console.error(
+        `       > Error exchanging ${exchangeProof.grant_type} for access token`
+      );
+      return errorBody;
+    }
+
     // Usually, this token data should be persisted in a database and associated with
     // a user identity.
-    const tokens = JSON.parse(responseBody);
+    const tokens = await response.json();
     refreshTokenStore[userId] = tokens.refresh_token;
     accessTokenCache.set(
       userId,
@@ -144,7 +154,7 @@ const exchangeForTokens = async (userId, exchangeProof) => {
     console.error(
       `       > Error exchanging ${exchangeProof.grant_type} for access token`
     );
-    return JSON.parse(e.response.body);
+    throw e;
   }
 };
 
@@ -187,23 +197,28 @@ const getContact = async accessToken => {
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
     };
+    console.log('===> Replace the following fetch() to test other API calls');
     console.log(
-      '===> Replace the following request.get() to test other API calls'
+      "===> fetch('https://api.hubapi.com/contacts/v1/lists/all/contacts/all?count=1')"
     );
-    console.log(
-      "===> request.get('https://api.hubapi.com/contacts/v1/lists/all/contacts/all?count=1')"
-    );
-    const result = await request.get(
+    const response = await fetch(
       'https://api.hubapi.com/contacts/v1/lists/all/contacts/all?count=1',
       {
         headers: headers,
       }
     );
 
-    return JSON.parse(result).contacts[0];
+    if (!response.ok) {
+      const errorBody = await response.json();
+      console.error('  > Unable to retrieve contact');
+      return errorBody;
+    }
+
+    const result = await response.json();
+    return result.contacts[0];
   } catch (e) {
     console.error('  > Unable to retrieve contact');
-    return JSON.parse(e.response.body);
+    throw e;
   }
 };
 
