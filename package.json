@@ -1,5 +1,5 @@
 {
-  "name": "express",
+  "name": "hubspot-bands-oauth",
   "type": "module",
   "dependencies": {
     "express": "5.1.0"
