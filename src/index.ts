@@ -3,7 +3,6 @@ const express = require('express');
 const request = require('request-promise-native');
 const NodeCache = require('node-cache');
 const session = require('express-session');
-const opn = require('open');
 const app = express();
 
 const PORT = 3000;
@@ -30,9 +29,13 @@ const CLIENT_SECRET = process.env.CLIENT_SECRET;
 
 // Scopes for this app will default to `crm.objects.contacts.read`
 // To request others, set the SCOPE environment variable instead
-let SCOPES = ['crm.objects.contacts.read'];
+const DEFAULT_SCOPES = ['crm.objects.contacts.read'];
+let scopes: string;
+
 if (process.env.SCOPE) {
-  SCOPES = process.env.SCOPE.split(/ |, ?|%20/).join(' ');
+  scopes = process.env.SCOPE.split(/ |, ?|%20/).join(' ');
+} else {
+  scopes = DEFAULT_SCOPES.join(' ');
 }
 
 // On successful install, users will be redirected to /oauth-callback
@@ -59,7 +62,7 @@ app.use(
 const authUrl =
   'https://app.hubspot.com/oauth/authorize' +
   `?client_id=${encodeURIComponent(CLIENT_ID)}` + // app's client ID
-  `&scope=${encodeURIComponent(SCOPES)}` + // scopes being requested by the app
+  `&scope=${encodeURIComponent(scopes)}` + // scopes being requested by the app
   `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`; // where to send the user after the consent page
 
 // Redirect the user from the installation page to
