@@ -1,18 +1,12 @@
 {
-  "name": "oauth_tutorial",
-  "version": "1.0.0",
-  "main": "index.js",
-  "license": "MIT",
-  "scripts": {
-    "start": "node index.js"
-  },
+  "name": "express",
+  "type": "module",
   "dependencies": {
-    "dotenv": "^6.0.0",
-    "express": "^4.16.3",
-    "express-session": "^1.15.6",
-    "node-cache": "^4.2.0",
-    "open": "^6.4.0",
-    "request": "^2.88.0",
-    "request-promise-native": "^1.0.5"
+    "express": "5.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "20.11.17",
+    "@types/express": "5.0.0",
+    "typescript": "5.8.3"
   }
 }

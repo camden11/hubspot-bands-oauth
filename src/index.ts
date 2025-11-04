@@ -153,7 +153,7 @@ const refreshAccessToken = async userId => {
     redirect_uri: REDIRECT_URI,
     refresh_token: refreshTokenStore[userId],
   };
-  return await exchangeForTokens(userId, refreshTokenProof);
+  return exchangeForTokens(userId, refreshTokenProof);
 };
 
 const getAccessToken = async userId => {
@@ -239,7 +239,4 @@ app.get('/error', (req, res) => {
   res.end();
 });
 
-app.listen(PORT, () =>
-  console.log(`=== Starting your app on http://localhost:${PORT} ===`)
-);
-opn(`http://localhost:${PORT}`);
+export default app;
