@@ -49,7 +49,9 @@ if (process.env.SCOPE) {
 }
 
 // On successful install, users will be redirected to /oauth-callback
-const REDIRECT_URI = 'https://hubspot-bands-oauth.vercel.app/oauth-callback';
+const REDIRECT_URI =
+  process.env.REDIRECT_URI ||
+  'https://hubspot-bands-oauth.vercel.app/oauth-callback';
 
 //===========================================================================//
 
@@ -82,6 +84,7 @@ app.get('/install', (req, res) => {
   console.log('=== Initiating OAuth 2.0 flow with HubSpot ===');
   console.log('');
   console.log("===> Step 1: Redirecting user to your app's OAuth URL");
+  console.log(`===> Using redirect URI: ${REDIRECT_URI}`);
   res.redirect(authUrl);
   console.log('===> Step 2: User is being prompted for consent by HubSpot');
 });
@@ -115,6 +118,7 @@ app.get('/oauth-callback', async (req, res) => {
     console.log(
       '===> Step 4: Exchanging authorization code for an access token and refresh token'
     );
+    console.log(`       > Using redirect URI: ${REDIRECT_URI}`);
     const token = await exchangeForTokens(req.sessionID, authCodeProof);
     if (token.message) {
       return res.redirect(`/error?msg=${token.message}`);
@@ -148,6 +152,8 @@ async function exchangeForTokens(
       console.error(
         `       > Error exchanging ${exchangeProof.grant_type} for access token`
       );
+      console.error(`       > Status: ${response.status}`);
+      console.error(`       > Error details:`, errorBody);
       return errorBody;
     }
 
