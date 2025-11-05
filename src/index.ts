@@ -120,7 +120,10 @@ app.get('/oauth-callback', async (req, res) => {
 //   Exchanging Proof for an Access Token   //
 //==========================================//
 
-const exchangeForTokens = async (userId, exchangeProof) => {
+async function exchangeForTokens(
+  userId: string,
+  exchangeProof: Record<string, string>
+): Promise<{ access_token: string; refresh_token: string }> {
   try {
     const response = await fetch('https://api.hubapi.com/oauth/v1/token', {
       method: 'POST',
@@ -156,9 +159,11 @@ const exchangeForTokens = async (userId, exchangeProof) => {
     );
     throw e;
   }
-};
+}
 
-const refreshAccessToken = async userId => {
+function refreshAccessToken(
+  userId: string
+): Promise<{ access_token: string; refresh_token: string }> {
   const refreshTokenProof = {
     grant_type: 'refresh_token',
     client_id: CLIENT_ID,
@@ -167,9 +172,9 @@ const refreshAccessToken = async userId => {
     refresh_token: refreshTokenStore[userId],
   };
   return exchangeForTokens(userId, refreshTokenProof);
-};
+}
 
-const getAccessToken = async userId => {
+async function getAccessToken(userId: string): Promise<string> {
   // If the access token has expired, retrieve
   // a new one using the refresh token
   if (!accessTokenCache.get(userId)) {
@@ -177,17 +182,17 @@ const getAccessToken = async userId => {
     await refreshAccessToken(userId);
   }
   return accessTokenCache.get(userId);
-};
+}
 
-const isAuthorized = userId => {
+function isAuthorized(userId: string): boolean {
   return refreshTokenStore[userId] ? true : false;
-};
+}
 
 //====================================================//
 //   Using an Access Token to Query the HubSpot API   //
 //====================================================//
 
-const getContact = async accessToken => {
+async function getContact(accessToken: string): Promise<Object> {
   console.log('');
   console.log(
     '=== Retrieving a contact from HubSpot using the access token ==='
@@ -220,7 +225,7 @@ const getContact = async accessToken => {
     console.error('  > Unable to retrieve contact');
     throw e;
   }
-};
+}
 
 //========================================//
 //   Displaying information to the user   //
