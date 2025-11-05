@@ -17,8 +17,6 @@ declare module 'express-serve-static-core' {
 
 const app = express();
 
-const PORT = 3000;
-
 const refreshTokenStore: Record<string, string> = {};
 const accessTokenCache = new NodeCache({ deleteOnExpire: true });
 
@@ -51,7 +49,7 @@ if (process.env.SCOPE) {
 }
 
 // On successful install, users will be redirected to /oauth-callback
-const REDIRECT_URI = `http://${process.env.VERCEL_URL}/oauth-callback`;
+const REDIRECT_URI = 'https://hubspot-bands-oauth.vercel.app/oauth-callback';
 
 //===========================================================================//
 
