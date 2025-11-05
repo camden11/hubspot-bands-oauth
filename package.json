@@ -8,6 +8,7 @@
   },
   "devDependencies": {
     "@types/express": "5.0.0",
+    "@types/express-session": "^1.18.2",
     "@types/node": "20.11.17",
     "typescript": "5.8.3"
   },

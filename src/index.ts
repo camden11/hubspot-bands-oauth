@@ -1,13 +1,25 @@
 import 'dotenv/config';
-import express from 'express';
+import express, { Request, Response } from 'express';
 import NodeCache from 'node-cache';
 import session from 'express-session';
+
+declare module 'express-session' {
+  interface SessionData {
+    userId?: string;
+  }
+}
+
+declare module 'express-serve-static-core' {
+  interface Request {
+    sessionID: string;
+  }
+}
 
 const app = express();
 
 const PORT = 3000;
 
-const refreshTokenStore = {};
+const refreshTokenStore: Record<string, string> = {};
 const accessTokenCache = new NodeCache({ deleteOnExpire: true });
 
 if (!process.env.CLIENT_ID || !process.env.CLIENT_SECRET) {
@@ -97,7 +109,7 @@ app.get('/oauth-callback', async (req, res) => {
       client_id: CLIENT_ID,
       client_secret: CLIENT_SECRET,
       redirect_uri: REDIRECT_URI,
-      code: req.query.code,
+      code: req.query.code as string,
     };
 
     // Step 4
@@ -123,7 +135,7 @@ app.get('/oauth-callback', async (req, res) => {
 async function exchangeForTokens(
   userId: string,
   exchangeProof: Record<string, string>
-): Promise<{ access_token: string; refresh_token: string }> {
+): Promise<{ access_token: string; refresh_token: string; message?: string }> {
   try {
     const response = await fetch('https://api.hubapi.com/oauth/v1/token', {
       method: 'POST',
@@ -152,7 +164,7 @@ async function exchangeForTokens(
     );
 
     console.log('       > Received an access token and refresh token');
-    return tokens.access_token;
+    return tokens;
   } catch (e) {
     console.error(
       `       > Error exchanging ${exchangeProof.grant_type} for access token`
@@ -163,7 +175,7 @@ async function exchangeForTokens(
 
 function refreshAccessToken(
   userId: string
-): Promise<{ access_token: string; refresh_token: string }> {
+): Promise<{ access_token: string; refresh_token: string; message?: string }> {
   const refreshTokenProof = {
     grant_type: 'refresh_token',
     client_id: CLIENT_ID,
@@ -181,7 +193,7 @@ async function getAccessToken(userId: string): Promise<string> {
     console.log('Refreshing expired access token');
     await refreshAccessToken(userId);
   }
-  return accessTokenCache.get(userId);
+  return accessTokenCache.get(userId) as string;
 }
 
 function isAuthorized(userId: string): boolean {
@@ -192,7 +204,7 @@ function isAuthorized(userId: string): boolean {
 //   Using an Access Token to Query the HubSpot API   //
 //====================================================//
 
-async function getContact(accessToken: string): Promise<Object> {
+async function getContact(accessToken: string): Promise<Contact> {
   console.log('');
   console.log(
     '=== Retrieving a contact from HubSpot using the access token ==='
@@ -231,7 +243,20 @@ async function getContact(accessToken: string): Promise<Object> {
 //   Displaying information to the user   //
 //========================================//
 
-const displayContactName = (res, contact) => {
+interface ContactProperty {
+  value: string;
+}
+
+interface Contact {
+  status: string;
+  message: string;
+  properties: {
+    firstname: ContactProperty;
+    lastname: ContactProperty;
+  };
+}
+
+const displayContactName = (res: Response, contact: Contact) => {
   if (contact.status === 'error') {
     res.write(
       `<p>Unable to retrieve contact! Error Message: ${contact.message}</p>`
@@ -242,7 +267,7 @@ const displayContactName = (res, contact) => {
   res.write(`<p>Contact name: ${firstname.value} ${lastname.value}</p>`);
 };
 
-app.get('/', async (req, res) => {
+app.get('/', async (req: Request, res: Response) => {
   res.setHeader('Content-Type', 'text/html');
   res.write(`<h2>HubSpot OAuth 2.0 Quickstart App</h2>`);
   if (isAuthorized(req.sessionID)) {
